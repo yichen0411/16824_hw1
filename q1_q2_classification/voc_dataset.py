@@ -19,6 +19,8 @@ class VOCDataset(Dataset):
     INV_CLASS = {}
     for i in range(len(CLASS_NAMES)):
         INV_CLASS[CLASS_NAMES[i]] = i
+        
+    #print("INV_CLASS",INV_CLASS)
 
     def __init__(self, split, size, data_dir='data/VOCdevkit/VOC2007/'):
         super().__init__()
@@ -29,6 +31,8 @@ class VOCDataset(Dataset):
         self.ann_dir = os.path.join(data_dir, 'Annotations')
 
         split_file = os.path.join(data_dir, 'ImageSets/Main', split + '.txt')
+        #print("split_file",split_file)
+        
         with open(split_file) as fp:
             self.index_list = [line.strip() for line in fp]
 
@@ -51,11 +55,22 @@ class VOCDataset(Dataset):
         :return: a list of labels. each element is in the form of [class, weight],
          where both class and weight are a numpy array in shape of [20],
         """
+        CLASS_NAMES = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
+                   'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
+                   'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+        INV_CLASS = {}
+        for i in range(len(CLASS_NAMES)):
+            INV_CLASS[CLASS_NAMES[i]] = i
+        
         label_list = []
+        #print("self.index_list",self.index_list)
         for index in self.index_list:
+            #print("index",index)
             fpath = os.path.join(self.ann_dir, index + '.xml')
             tree = ET.parse(fpath)
             
+            #print("tree",tree)
+            root = tree.getroot()
             #######################################################################
             # TODO: Insert your code here to preload labels
             # Hint: the folder Annotations contains .xml files with class labels
@@ -67,11 +82,19 @@ class VOCDataset(Dataset):
 
             #  The class vector should be a 20-dimensional vector with class[i] = 1 if an object of class i is present in the image and 0 otherwise
             class_vec = torch.zeros(20)
-
+            
             # The weight vector should be a 20-dimensional vector with weight[i] = 0 iff an object of class i has the `difficult` attribute set to 1 in the XML file and 1 otherwise
             # The difficult attribute specifies whether a class is ambiguous and by setting its weight to zero it does not contribute to the loss during training 
             weight_vec = torch.ones(20)
-
+            
+            for obj in root.findall('object'):
+                idx = INV_CLASS[obj.find("name").text]
+                class_vec[idx]=1
+                diff = obj.find("difficult").text
+                if diff == "1":
+                    weight_vec[idx] = 0
+            
+            #print("weight_vec",weight_vec)
             ######################################################################
             #                            END OF YOUR CODE                        #
             ######################################################################
@@ -124,3 +147,7 @@ class VOCDataset(Dataset):
         wgt = torch.FloatTensor(wgt_vec)
 
         return image, label, wgt
+
+
+if __name__ == "__main__":
+    dataset = VOCDataset(split='train', size=224)
