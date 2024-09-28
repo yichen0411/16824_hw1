@@ -36,6 +36,7 @@ def train(args, model, optimizer, scheduler=None, model_name='model'):
     cnt = 0
 
     for epoch in range(args.epochs):
+        print("epochs",epoch)
         for batch_idx, (data, target, wgt) in enumerate(train_loader):
             data, target, wgt = data.to(args.device), target.to(args.device), wgt.to(args.device)
 
@@ -53,7 +54,7 @@ def train(args, model, optimizer, scheduler=None, model_name='model'):
             # Function Outputs:
             #   - `output`: Computed loss, a single floating point number
             ##################################################################
-            loss = 0
+            loss = -torch.sum(wgt * (target * torch.log(output) + (1 - target) * torch.log(1 - output)))
             ##################################################################
             #                          END OF YOUR CODE                      #
             ##################################################################
@@ -65,19 +66,21 @@ def train(args, model, optimizer, scheduler=None, model_name='model'):
                 print('Train Epoch: {} [{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, cnt, 100. * batch_idx / len(train_loader), loss.item()))
                 
                 # Log gradients
-                for tag, value in model.named_parameters():
-                    if value.grad is not None:
-                        writer.add_histogram(tag + "/grad", value.grad.cpu().numpy(), cnt)
+                # for tag, value in model.named_parameters():
+                #     if value.grad is not None:
+                #         #print("value.grad.cpu().numpy()",value.grad.cpu().numpy())
+                #         writer.add_histogram(tag + "/grad", value.grad.cpu().numpy(), cnt)
+                #         print("writer work!")
 
             optimizer.step()
             
             # Validation iteration
-            if cnt % args.val_every == 0:
-                model.eval()
-                ap, map = utils.eval_dataset_map(model, args.device, test_loader)
-                print("map: ", map)
-                writer.add_scalar("map", map, cnt)
-                model.train()
+            #if cnt % args.val_every == 0:
+            model.eval()
+            ap, map = utils.eval_dataset_map(model, args.device, test_loader)
+            print("map: ", map)
+            writer.add_scalar("map", map, cnt)
+            model.train()
             
             cnt += 1
 

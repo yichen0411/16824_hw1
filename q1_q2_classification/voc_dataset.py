@@ -90,17 +90,20 @@ class VOCDataset(Dataset):
             for obj in root.findall('object'):
                 idx = INV_CLASS[obj.find("name").text]
                 class_vec[idx]=1
+                #print("class_vec",class_vec)
                 diff = obj.find("difficult").text
                 if diff == "1":
                     weight_vec[idx] = 0
             
-            #print("weight_vec",weight_vec)
+            #print("class_vec",class_vec)
+            # print("weight_vec",weight_vec)
             ######################################################################
             #                            END OF YOUR CODE                        #
             ######################################################################
 
             label_list.append((class_vec, weight_vec))
-
+        
+        #print("label_list",label_list)
         return label_list
 
     def get_random_augmentations(self):
@@ -115,7 +118,9 @@ class VOCDataset(Dataset):
         # change and you will have to write the correct value of `flat_dim`
         # in line 46 in simple_cnn.py
         ######################################################################
-        pass
+        return [transforms.RandomHorizontalFlip(p=0.5),
+                transforms.ColorJitter(brightness=0.2, contrast=0.3, saturation=0.3),
+                transforms.RandomRotation(degrees=5)]
         ######################################################################
         #                            END OF YOUR CODE                        #
         ######################################################################
@@ -134,20 +139,18 @@ class VOCDataset(Dataset):
         img = Image.open(fpath)
 
         trans = transforms.Compose([
-            transforms.Resize(self.size),
+            transforms.Resize((self.size,self.size)),
             *self.get_random_augmentations(),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.457, 0.407], std=[0.5, 0.5, 0.5]),
         ])
 
         img = trans(img)
+        #print("img.shape",img.shape)
         lab_vec, wgt_vec = self.anno_list[index] 
+        
         image = torch.FloatTensor(img)
         label = torch.FloatTensor(lab_vec)
         wgt = torch.FloatTensor(wgt_vec)
 
         return image, label, wgt
-
-
-if __name__ == "__main__":
-    dataset = VOCDataset(split='train', size=224)

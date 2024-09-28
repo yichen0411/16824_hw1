@@ -73,13 +73,21 @@ def get_data_loader(name='voc', train=True, batch_size=64, split='train', inp_si
         dataset = VOCDataset(split, inp_size)
     else:
         raise NotImplementedError
+    
+    # def collate_fn(batch):
+    #     return {
+    #         'pixel_values': torch.stack([x['pixel_values'] for x in batch]),
+    #         'labels': torch.tensor([x['labels'] for x in batch])
+    #     }
 
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=train,
         num_workers=4,
+        # collate_fn=collate_fn
     )
+    #print("loader processed")
     return loader
 
 

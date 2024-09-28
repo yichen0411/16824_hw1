@@ -38,7 +38,7 @@ class SimpleCNN(nn.Module):
         self.pool2 = nn.AvgPool2d(2, 2)
 
         # TODO set the correct dim here
-        self.flat_dim = None
+        self.flat_dim = 64*16*16
 
         # Sequential is another way of chaining the layers.
         self.fc1 = nn.Sequential(*get_fc(self.flat_dim, 128, 'none'))
@@ -49,17 +49,23 @@ class SimpleCNN(nn.Module):
         :param x: input image in shape of (N, C, H, W)
         :return: out: classification logits in shape of (N, Nc)
         """
-
         N = x.size(0)
+        #print("input size",x.shape)
         x = self.conv1(x)
+        #print("after conv1(x)",x.shape)
         x = self.nonlinear(x)
+        #print("after nonlinear(x)",x.shape)
         x = self.pool1(x)
-
+        #print("after pool1(x)",x.shape)
+        
         x = self.conv2(x)
+        #print("after conv2(x)",x.shape)
         x = self.nonlinear(x)
         x = self.pool2(x)
-
+        #print("after pool2(x)",x.shape)
+        
         flat_x = x.view(N, self.flat_dim)
+        
         out = self.fc1(flat_x)
         out = self.fc2(out)
         return out
